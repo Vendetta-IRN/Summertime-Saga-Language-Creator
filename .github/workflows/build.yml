@@ -1,0 +1,72 @@
+name: Build Windows EXE
+
+on:
+  push:
+    branches: [main, master]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  APP_NAME: Summertime Saga Language Creator
+  SCRIPT: summertime_saga_language_creator.py
+  ICON_PNG: icon.png
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install build tools
+        run: python -m pip install --upgrade pip pyinstaller pillow
+
+      - name: Check required files
+        shell: python
+        run: |
+          import os, sys
+          missing = [f for f in (os.environ["SCRIPT"], os.environ["ICON_PNG"]) if not os.path.isfile(f)]
+          if missing:
+              print("::error::Missing file(s) in the repository root: " + ", ".join(missing))
+              sys.exit(1)
+
+      - name: Convert PNG icon to ICO
+        shell: python
+        run: |
+          import os
+          from PIL import Image
+          im = Image.open(os.environ["ICON_PNG"]).convert("RGBA")
+          side = max(im.size)
+          square = Image.new("RGBA", (side, side), (0, 0, 0, 0))
+          square.paste(im, ((side - im.width) // 2, (side - im.height) // 2))
+          square = square.resize((256, 256), Image.Resampling.LANCZOS)
+          square.save("icon.ico", format="ICO",
+                      sizes=[(16, 16), (24, 24), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)])
+          print("icon.ico written")
+
+      - name: Build EXE with PyInstaller (no console window)
+        run: >
+          pyinstaller --noconfirm --clean --onefile --noconsole
+          --name "${{ env.APP_NAME }}"
+          --icon icon.ico
+          --add-data "icon.png;."
+          "${{ env.SCRIPT }}"
+
+      - name: Upload EXE
+        uses: actions/upload-artifact@v4
+        with:
+          name: Summertime-Saga-Language-Creator-windows
+          path: dist/Summertime Saga Language Creator.exe
+          if-no-files-found: error
+          retention-days: 30
+          
