@@ -1,79 +1,66 @@
-```markdown
-<div align="center">
-  <h1>Summertime Saga Language Creator 🛠️</h1>
-  <p><strong>An all-in-one GUI tool to create, manage, and extract translations for Summertime Saga (v0.20.16 PC).</strong></p>
-  
-  <a href="README_fa.md">
-    <img src="https://img.shields.io/badge/Language-Persian%20(فارسی)-green?style=for-the-badge" alt="Persian Version">
-  </a>
-</div>
+<h1 align="center">Summertime Saga Language Creator</h1>
 
----
+<p align="center">A one-file GUI tool that creates new translation languages for Summertime Saga, extracts its hidden dialogue straight from the game's .rpa archives, and adds an in-game language switcher.</p>
 
-## 📖 About The Project
-Because *Summertime Saga* ships with compiled `.rpa` archives and lacks the original `.rpy` source files, standard Ren'Py translation tools fail to add new languages. 
+<p align="center">
+  <a href="README_fa.md"><img src="https://img.shields.io/badge/README-%D9%81%D8%A7%D8%B1%D8%B3%DB%8C-blue" alt="Persian README"></a>
+  <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License">
+</p>
 
-**Summertime Saga Language Creator** bypasses these limitations with a user-friendly, standalone Windows application. It extracts hidden strings directly from the compiled game archives, generates perfectly formatted translation files, and even adds an in-game language switcher.
+## About The Project
 
-## ✨ Key Features
-* **Single-File Application:** No CLI or terminal needed. Just run the `.exe`.
-* **Auto-Detection:** Automatically detects your previously used settings (Font, RTL/LTR, Display Name) when selecting the game folder.
-* **Smart Extraction (Step 3):** Bypasses standard Ren'Py limitations to extract hardcoded dialogues and UI text directly from `scripts.rpa`.
-* **Zero Syntax Errors:** Generates strictly formatted `.rpy` files (no Tab characters, proper spacing) preventing `Parsing the script failed` crashes.
-* **Duplicate Protection:** Scans the entire translation folder before writing to prevent `Duplicate Translation` game crashes.
-* **In-Game Menu:** Installs a custom hotkey (`Shift + L`) to switch languages seamlessly in-game without cache issues.
+Summertime Saga ships its scripts compiled (`.rpyc`) inside `.rpa` archives such as `scripts.rpa`, and it does not include the original `.rpy` source files. Because of this, the Ren'Py launcher cannot generate translation files for most of the game's text. Many lines, such as the intro "Previously on Summertime Saga", never show up in the standard translation files.
 
-## 📥 Download & Installation
-1. Go to the **Releases** section on the right side of this page.
-2. Download the latest `Summertime-Saga-Language-Creator-windows.zip`.
-3. Extract the `.zip` file.
-4. Run `Summertime Saga Language Creator.exe`.
+Summertime Saga Language Creator closes that gap. It reads the archives directly, finds the missing texts, and writes translation files that Ren'Py accepts, so you can translate the whole game into any language.
 
-> **⚠️ Windows SmartScreen Warning:** 
-> Because this is an open-source modding tool and does not have an expensive digital certificate, Windows might show a warning. This is completely normal. Simply click **"More info"** and then **"Run anyway"**. The source code is 100% open for you to inspect.
+## Key Features
 
-## 🚀 Usage Guide
+- **Single-File Application**: the whole toolkit is one program. No Python scripts to juggle and no command line needed.
+- **Auto-Detection of settings**: pick the game folder and the tool finds your existing languages. It fills in the display name, text direction (RTL/LTR) and font from the files it generated earlier.
+- **Smart Extraction (RPA)**: reads `scripts.rpa` (read-only), pulls readable texts out of the compiled scripts, and writes only the ones missing from your translation files.
+- **Zero Syntax Errors (strict 4-space indentation)**: every generated `.rpy` file is validated before it is written. It uses 4 spaces and never tabs, which avoids the "Parsing the script failed" error.
+- **Duplicate Protection**: before writing, the whole `game/tl/<language>/` folder is scanned. A string that already has an `old "..."` entry is never written again, which prevents the "A translation for ... already exists" crash.
+- **In-Game Menu**: adds a language picker to the game (default hotkey Shift+L, optional corner button) that switches language and font, including RTL.
 
-### 1. Language Tab
-* Select your game root folder (the folder containing `game/` and `renpy/`).
-* Choose your font file *(Highly recommended: **Vazirmatn** for Persian, as it supports Arabic Presentation Forms).*
-* Select the text direction (RTL for Persian/Arabic).
-* Click **Install Language**. 
-* *Note: After this, open the game once and close it. This generates the initial translation files.*
+## Download & Installation
 
-### 2. In-Game Menu Tab
-* Use this to install an in-game language picker.
-* Click **Install Menu**. Inside the game, press `Shift + L` to switch languages at any time.
+1. Open the **[Releases](../../releases)** section of this repository.
+2. Download the latest `Summertime Saga Language Creator.exe`.
+3. Run it. No installation is needed.
 
-### 3. Extract RPA Tab
-* Most dialogues are hidden inside the game's `.rpa` archives.
-* Click **Extract RPA & Generate Strings**.
-* This creates `zz_extracted_dialogues.rpy` in `game/tl/persian/` containing all missing texts.
-* Tick "Prefill with English" if you want untranslated lines to show English instead of being blank.
+> [!WARNING]
+> **Windows SmartScreen may show "Windows protected your PC".**
+> The `.exe` is open source and **not code-signed**, so Windows does not recognize the publisher. This is normal for unsigned programs. To run it, click **More info**, then **Run anyway**. If you prefer not to trust a prebuilt file, read the source code and build the `.exe` yourself (see [Build from Source](#build-from-source)).
 
-### 4. Custom Text Tab
-* Missing a specific UI text (like the intro "Previously on Summertime Saga")?
-* Use the search bar to find any string in the game files.
-* Click **Add to Custom Translation** to add it to `zz_custom_ui.rpy`.
+## Usage Guide
 
-## 🛠️ Building from Source
-If you prefer to run the Python script directly or build the `.exe` yourself:
-1. Clone this repository.
-2. Ensure you have Python 3.8+ installed.
-3. Run the app: `python summertime_saga_language_creator.py`
-4. To build the exe:
-   ```bash
-   pip install pyinstaller pillow
-   pyinstaller --noconsole --onefile --icon=icon.png summertime_saga_language_creator.py
-```
+Start by selecting the game's root folder (the one that contains `game/` and `renpy/`). Then choose an existing language or type a new name, for example `persian`.
 
-🙏 Credits
+1. **Language**: creates or updates a language. Set the display name, text direction (RTL/LTR) and font file. The tool writes the language files into the game and queues the translation skeleton. Start the game once and quit, so the game generates the standard translation files.
+2. **In-Game Menu**: installs or removes the in-game language picker. Choose the hotkey and an optional corner button.
+3. **Extract RPA**: click **Extract RPA & Generate Strings**. The tool reads the game's archives and writes the missing texts to `game/tl/<language>/zz_extracted_dialogues.rpy`, each with an empty `new ""` for you to translate.
+4. **Custom Text**: search for an English phrase in your translation files or in the whole `game/` folder. Select results and click **Add to Custom Translation** to queue them in `game/tl/<language>/zz_custom_ui.rpy`. Double-click a result to open its file.
 
-· Tool Developer: Vendetta IRN
-· Special Thanks: Summertime Saga modding community.
+Notes:
+- Files the tool overwrites are copied to `_lang_backup/` first. Original game files and `.rpa` archives are never modified.
+- Text drawn inside images or videos cannot be found by any text search.
+- RTL rendering depends on the font. In this Ren'Py version the font must contain Arabic Presentation Forms for letters to join correctly.
 
-📜 Disclaimer
+## Build from Source
 
-This project is for educational and modding purposes only. It is not affiliated with DarkCookie or the official Summertime Saga team. All rights to the game belong to their respective owners.
+Requirements: Python 3.8 or newer with tkinter, plus PyInstaller and Pillow. Pillow is needed so that PyInstaller can convert your `icon.png` to an `.ico` for the executable.
 
-```
+Put `icon.png` next to the script, then run:
+
+    pip install pyinstaller pillow
+    pyinstaller --noconfirm --clean --onefile --noconsole --name "Summertime Saga Language Creator" --icon icon.png --add-data "icon.png;." summertime_saga_language_creator.py
+
+The finished file is created in the `dist` folder. `--noconsole` hides the console window.
+
+## Credits
+
+Developed by **Vendetta IRN**.
+
+## License
+
+This project is licensed under the **MIT License**. See the `LICENSE` file for details.
