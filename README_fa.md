@@ -27,7 +27,7 @@ Summertime Saga Language Creator این مشکل را حل می‌کند. ابز
 ## دانلود و نصب
 
 1. بخش **[Releases](../../releases)** همین مخزن را باز کنید.
-2. آخرین نسخه‌ی `Summertime Saga Language Creator.exe` را دانلود کنید.
+2. آخرین نسخه‌ی `Summertime-Saga-Language-Creator-vX.Y.Z.exe` را دانلود کنید (شماره‌ی نسخه در نام فایل است). به هر ریلیز یک فایل چک‌سام `.sha256.txt` هم پیوست می‌شود.
 3. آن را اجرا کنید. نصب لازم نیست.
 
 > [!WARNING]

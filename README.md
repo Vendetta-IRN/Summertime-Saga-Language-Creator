@@ -25,7 +25,7 @@ Summertime Saga Language Creator closes that gap. It reads the archives directly
 ## Download & Installation
 
 1. Open the **[Releases](../../releases)** section of this repository.
-2. Download the latest `Summertime Saga Language Creator.exe`.
+2. Download the latest `Summertime-Saga-Language-Creator-vX.Y.Z.exe` (the file name carries the version number). A `.sha256.txt` checksum file is attached to every release.
 3. Run it. No installation is needed.
 
 > [!WARNING]
