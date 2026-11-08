@@ -1,14 +1,16 @@
-name: Build Windows EXE
+name: Build and Release
 
 on:
   push:
     branches: [main, master]
-    tags: ["v*"]
+    tags: ["v*"]          # pushing a tag like v1.0.1 builds AND publishes a release
   pull_request:
-  workflow_dispatch:
-
-permissions:
-  contents: read
+  workflow_dispatch:      # Actions tab -> Run workflow -> type a version to publish a release
+    inputs:
+      version:
+        description: "Version to release, e.g. 1.0.1 (leave empty to only build)"
+        required: false
+        type: string
 
 env:
   APP_NAME: Summertime Saga Language Creator
@@ -19,9 +21,30 @@ jobs:
   build:
     runs-on: windows-latest
     timeout-minutes: 20
+    permissions:
+      contents: write     # needed to create the release and its tag
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+
+      - name: Work out version
+        id: ver
+        shell: pwsh
+        env:
+          INPUT_VERSION: ${{ github.event.inputs.version }}
+        run: |
+          $v = ""
+          if ($env:GITHUB_REF -like "refs/tags/v*") { $v = $env:GITHUB_REF_NAME.Substring(1) }
+          elseif ($env:INPUT_VERSION) { $v = $env:INPUT_VERSION.Trim().TrimStart("v") }
+          if ($v -ne "" -and $v -notmatch '^\d+\.\d+\.\d+$') {
+            Write-Error "Version must look like 1.2.3 (got '$v')"
+            exit 1
+          }
+          $release = "false"
+          if ($v -ne "") { $release = "true" } else { $v = "0.0.0-dev.$($env:GITHUB_RUN_NUMBER)" }
+          "version=$v" >> $env:GITHUB_OUTPUT
+          "release=$release" >> $env:GITHUB_OUTPUT
+          Write-Host "version=$v release=$release"
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -39,6 +62,22 @@ jobs:
           if missing:
               print("::error::Missing file(s) in the repository root: " + ", ".join(missing))
               sys.exit(1)
+
+      - name: Stamp version into the program
+        shell: python
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          import os, re
+          p, v = os.environ["SCRIPT"], os.environ["VERSION"]
+          with open(p, encoding="utf-8", newline="") as f:
+              s = f.read()
+          s, n = re.subn(r'^APP_VERSION = ".*"', 'APP_VERSION = "%s"' % v, s, flags=re.M)
+          if n != 1:
+              raise SystemExit("APP_VERSION line not found exactly once in " + p)
+          with open(p, "w", encoding="utf-8", newline="") as f:
+              f.write(s)
+          print("APP_VERSION =", v)
 
       - name: Convert PNG icon to ICO
         shell: python
@@ -62,11 +101,39 @@ jobs:
           --add-data "icon.png;."
           "${{ env.SCRIPT }}"
 
-      - name: Upload EXE
+      - name: Name the EXE with its version and write a checksum
+        id: pack
+        shell: pwsh
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          $name = "Summertime-Saga-Language-Creator-v$($env:VERSION).exe"
+          Move-Item "dist/$($env:APP_NAME).exe" "dist/$name"
+          $hash = (Get-FileHash "dist/$name" -Algorithm SHA256).Hash.ToLower()
+          "$hash  $name" | Out-File "dist/$name.sha256.txt" -Encoding ascii
+          "exe=dist/$name" >> $env:GITHUB_OUTPUT
+          "sum=dist/$name.sha256.txt" >> $env:GITHUB_OUTPUT
+          Write-Host "$hash  $name"
+
+      - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Summertime-Saga-Language-Creator-windows
-          path: dist/Summertime Saga Language Creator.exe
+          name: Summertime-Saga-Language-Creator-v${{ steps.ver.outputs.version }}-windows
+          path: |
+            ${{ steps.pack.outputs.exe }}
+            ${{ steps.pack.outputs.sum }}
           if-no-files-found: error
           retention-days: 30
-          
+
+      - name: Publish GitHub release
+        if: steps.ver.outputs.release == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.ver.outputs.version }}
+          target_commitish: ${{ github.sha }}
+          name: ${{ env.APP_NAME }} v${{ steps.ver.outputs.version }}
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          files: |
+            ${{ steps.pack.outputs.exe }}
+            ${{ steps.pack.outputs.sum }}
